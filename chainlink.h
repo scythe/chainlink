@@ -1,3 +1,4 @@
+#pragma once
 
 #define link(name, vars) \
    typedef struct __cl_s_link_##name { \
@@ -24,12 +25,12 @@
 #define chainarr(type, name) \
    typedef type *__cl_chain_##name; \
    typedef type __cl_chainlit_##name;
-   
+
 #define cl_index(name, arr, ind) \
    (*(((__cl_chain_##name) arr) + ind))
 
 #define cl_index_check(id, name, arr, ind) { \
-   if(ind < arr.len && ind >= 0) id = cl_index(name, arr, ind); \
+   if(ind < arr.n && ind >= 0) id = cl_index(name, arr, ind); \
    else id = * (__typeof__(id) *) cl_zero; \
 }
 
@@ -55,6 +56,12 @@ static const __attribute__((unused)) unsigned long cl_zero = {0, 0, 0, 0,0, 0, 0
  0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,\
  0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,\ 
 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0}; 
+
+#define chainunion(name, type) \
+   typedef __cl_chain_##name type;
+
+#define cl_as(name, var, kind) \
+   (((__cl_chain_##name) var).kind)
 
 //Counts arguments. It's really too bad I never learned to count higher than three...
 #define CL_NARG( ...) CL_NARG_(__VA_ARGS__,CL_RSEQ_N())
@@ -94,12 +101,12 @@ static const __attribute__((unused)) unsigned long cl_zero = {0, 0, 0, 0,0, 0, 0
 
 #define chainarr_decl_2(name, id, varlit, ...) { \
    __cl_chainlit_##name __cl_mangle_##id[] = varlit; \
-   __cl_link_##name id = { __cl_mangle_##id , .len = sizeof(__cl_mangle_##id)}; \
+   __cl_link_##name id = { __cl_mangle_##id , .n = sizeof(__cl_mangle_##id)}; \
 }
 
 #define chainarr_decl_3(name, id, varlit, ...) { \
    __cl_chainlit_##name __cl_mangle_##id[] = varlit; \
-   __cl_link_##name id = { __cl_mangle_##id , .len = sizeof(__cl_mangle_##id),  __VA_ARGS__ };\
+   __cl_link_##name id = { __cl_mangle_##id , .n = sizeof(__cl_mangle_##id),  __VA_ARGS__ };\
 }
 
 #define chainptr_decl(name, ...) \
@@ -112,12 +119,12 @@ static const __attribute__((unused)) unsigned long cl_zero = {0, 0, 0, 0,0, 0, 0
    __cl_link_##name id = { NULL }
 
 #define chainptr_decl_2(name, id, ptr, ...) { \
-   __cl_chainlit_##name *__cl_mangle_##id = ptr; \
+   __cl_chain_##name __cl_mangle_##id = ptr; \
    __cl_link_##name id = { __cl_mangle_##id }; \
 }
 
 #define chainptr_decl_3(name, id, ptr, ...) { \
-   __cl_chainlit_##name *__cl_mangle_##id = ptr; \
+   __cl_chain_##name __cl_mangle_##id = ptr; \
    __cl_link_##name id = { __cl_mangle_##id , __VA_ARGS__ };\
 }
 
@@ -130,15 +137,20 @@ static const __attribute__((unused)) unsigned long cl_zero = {0, 0, 0, 0,0, 0, 0
 #define chainptr_alloc_1(name, id, ...) \
    enum { alloc_requires_length = 1/0 }
 
-#define chainptr_alloc_2(name, id, len) { \
-   __cl_chainlit_##name *__cl_mangle_##id = malloc(len * sizeof(__cl_chainlit_##name)); \
+#define chainptr_alloc_2(name, id, n) { \
+   __cl_chain_##name __cl_mangle_##id = malloc(n * sizeof(__cl_chainlit_##name)); \
    __cl_link_##name id = { __cl_mangle_##id }; \
 }
 
-#define chainptr_alloc_3(name, id, ptr, ...) { \
-   __cl_chainlit_##name *__cl_mangle_##id = malloc(len * sizeof(__cl_chainlit_##name)); \
+#define chainptr_alloc_3(name, id, n, ...) { \
+   __cl_chain_##name __cl_mangle_##id = malloc(n * sizeof(__cl_chainlit_##name)); \
    __cl_link_##name id = { __cl_mangle_##id , __VA_ARGS__ };\
 }
+
+#define chainptr_realloc(name, id, n) \
+   id.name = realloc(id.name, sizeof(__cl_chainlit_##name) * n);
+
+//FIXME: define chain unions. separate declaration/definition. should work in headers etc.
 
 #define cl_t(name) __cl_link_name
 
