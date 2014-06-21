@@ -56,7 +56,17 @@ static const __attribute__((unused)) unsigned long cl_zero = {0, 0, 0, 0,0, 0, 0
  0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,\ 
 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0,0, 0, 0, 0}; 
 
-//TODO: Actually import PP_NARG
+//Counts arguments. It's really too bad I never learned to count higher than three...
+#define CL_NARG( ...) CL_NARG_(__VA_ARGS__,CL_RSEQ_N())
+#define CL_NARG_(...) CL_ARG_N(__VA_ARGS__)
+#define CL_ARG_N(_1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16,_17,_18,_19, \
+	_21,_22,_23,_24,_25,_26,_27,_28,_29,_30,_31,_32,_33,_34,_35,_36,_37,_38,_39, \
+	_41,_42,_43,_44,_45,_46,_47,_48,_49,_50,_51,_52,_53,_54,_55,_56,_57,_58,_59, \
+	_61,_62,_63,N,...) N
+
+#define CL_RSEQ_N() 3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, \
+	3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 3,3,3,3,3,3,3,3, 3,3,3,3,3,2,1,0
+
 //first __VA_ARG is always "id", variable being declared
 #define chainfunc_decl(name, ...) \
    chainfunc_decl_(CL_NARG(__VA_ARGS__), name, __VA_ARGS__)
@@ -65,13 +75,13 @@ static const __attribute__((unused)) unsigned long cl_zero = {0, 0, 0, 0,0, 0, 0
    chainfunc_decl_##len(name, id, __VA_ARGS__) 
    
 #define chainfunc_decl_1(name, id, ...) \
-   __cl_link_##name id = { __cl_mangle_##name };
+   __cl_link_##name id = { __cl_mangle_##name }
 
 #define chainfunc_decl_2(name, id, ...) \
-   __cl_link_##name id = {__cl_mangle_##name, __VA_ARGS__};
+   __cl_link_##name id = {__cl_mangle_##name, __VA_ARGS__}
 
 #define chainfunc_decl_3(name, id, ...) \
-   __cl_link_##name id = {__cl_mangle_##name, __VA_ARGS__};
+   __cl_link_##name id = {__cl_mangle_##name, __VA_ARGS__}
 
 #define chainarr_decl(name, ...) \
    chainarr_decl_(CL_NARG(__VA_ARGS__), name, __VA_ARGS__)
@@ -80,15 +90,53 @@ static const __attribute__((unused)) unsigned long cl_zero = {0, 0, 0, 0,0, 0, 0
    chainarr_decl_##len(name, id, __VA_ARGS__) 
    
 #define chainarr_decl_1(name, id, ...) \
-   __cl_link_##name id = { NULL };
+   __cl_link_##name id = { NULL }
 
 #define chainarr_decl_2(name, id, varlit, ...) { \
    __cl_chainlit_##name __cl_mangle_##id[] = varlit; \
-   __cl_link_##name id = { __cl_mangle_##id }; \
+   __cl_link_##name id = { __cl_mangle_##id , .len = sizeof(__cl_mangle_##id)}; \
 }
 
 #define chainarr_decl_3(name, id, varlit, ...) { \
    __cl_chainlit_##name __cl_mangle_##id[] = varlit; \
+   __cl_link_##name id = { __cl_mangle_##id , .len = sizeof(__cl_mangle_##id),  __VA_ARGS__ };\
+}
+
+#define chainptr_decl(name, ...) \
+   chainptr_decl_(CL_NARG(__VA_ARGS__), name, __VA_ARGS__)
+
+#define chainptr_decl_(len, name, id, ...) \
+   chainptr_decl_##len(name, id, __VA_ARGS__) 
+   
+#define chainptr_decl_1(name, id, ...) \
+   __cl_link_##name id = { NULL }
+
+#define chainptr_decl_2(name, id, ptr, ...) { \
+   __cl_chainlit_##name *__cl_mangle_##id = ptr; \
+   __cl_link_##name id = { __cl_mangle_##id }; \
+}
+
+#define chainptr_decl_3(name, id, ptr, ...) { \
+   __cl_chainlit_##name *__cl_mangle_##id = ptr; \
+   __cl_link_##name id = { __cl_mangle_##id , __VA_ARGS__ };\
+}
+
+#define chainptr_alloc(name, ...) \
+   chainarr_alloc_(CL_NARG(__VA_ARGS__), name, __VA_ARGS__)
+
+#define chainptr_alloc_(len, name, id, ...) \
+   chainptr_alloc_##len(name, id, __VA_ARGS__) 
+   
+#define chainptr_alloc_1(name, id, ...) \
+   enum { alloc_requires_length = 1/0 }
+
+#define chainptr_alloc_2(name, id, len) { \
+   __cl_chainlit_##name *__cl_mangle_##id = malloc(len * sizeof(__cl_chainlit_##name)); \
+   __cl_link_##name id = { __cl_mangle_##id }; \
+}
+
+#define chainptr_alloc_3(name, id, ptr, ...) { \
+   __cl_chainlit_##name *__cl_mangle_##id = malloc(len * sizeof(__cl_chainlit_##name)); \
    __cl_link_##name id = { __cl_mangle_##id , __VA_ARGS__ };\
 }
 
