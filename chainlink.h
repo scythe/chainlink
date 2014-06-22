@@ -49,6 +49,11 @@
 	else memset(&id, 0, sizeof(id)); \
 }
 
+#define cl_realloc(id, name, n) { \
+	id.##name = realloc(id.##name, n * sizeof(__cl_chainlit_##name)); \
+	id.n = n; \
+}
+
 /*
  * Here we take advantage of 6.7.2.1 again: "A pointer to a union object, 
  * suitably converted, points to each of its members..."
