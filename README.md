@@ -38,3 +38,25 @@ Also, he would probably hate `chainlink.h`, so don't try to use it in the kernel
 It is also recommended that you do not sit and code for more than three hours at a time. Go take a walk outside. Also, though
 the style guide occasionally makes reference to staying up for twenty hours until you can barely recognize indentation,
 don't do that.
+
+# usage examples
+
+The accumulator example from [Paul Graham's *Revenge of the Nerds*](http://www.paulgraham.com/icad.html) may be written thus:
+
+```c
+link(accum, int foo;);
+
+chainfunc(int, accum, int bar) {
+	return accum.foo + bar;
+}
+
+int main(int argc, char **argv) {
+	int a = 1, b = 2, c = 3;
+	chainfunc_decl(accum, a_plus, a);
+	a = 4;
+	chainfunc_decl(accum, a_plus2, a);
+	printf("1 + 2 = %d, 4 + 3 = %d\n", cl_call(a_plus, b), cl_call(a_plus2, c));
+	return 0;
+}
+```
+
